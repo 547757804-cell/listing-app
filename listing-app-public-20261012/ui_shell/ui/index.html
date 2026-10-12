@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>BOL 精品半自动化后台</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/bol.css">
+  <link rel="stylesheet" href="/integration.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark">B</div><div><b>BOL STUDIO</b><small>精品半自动化后台</small></div></div>
+      <div class="nav-caption">工作台</div>
+      <button class="nav active" data-view="board"><span>▦</span>产品总看板</button>
+      <div class="nav-caption spaced">一级业务中心</div>
+      <button class="nav" data-view="listing-overview"><span>▣</span>Listing 制作</button>
+      <div class="listing-subnav" aria-label="Listing 页面">
+        <button class="nav-sub active" data-view="listing-overview">Listing 总览</button>
+        <button class="nav-sub" data-view="listing-prep">资料与准备</button>
+        <button class="nav-sub" data-view="listing-keywords">关键词</button>
+        <button class="nav-sub" data-view="listing-generation">Listing 生成</button>
+        <button class="nav-sub" data-view="listing-qa">QA 与上传</button>
+        <button class="nav-sub" data-view="listing-archive">已上传存档</button>
+      </div>
+      <button class="nav" data-view="research"><span>⌕</span>竞品调研</button>
+      <div class="nav-caption spaced">任务管理</div>
+      <button class="nav" data-view="pools"><span>▤</span>活动池</button>
+      <button class="nav" data-view="exceptions"><span>⚑</span>异常闭环 <i id="exceptionBadge">0</i></button>
+      <button class="nav" data-view="import"><span>＋</span>导入产品</button>
+      <div class="sidebar-bottom"><span class="live-dot"></span><span>本地运行 · SKU 独立任务</span><small id="dataPath">BOL 数据目录读取中</small></div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar"><div><span class="eyebrow">PRODUCT OPERATIONS / BOL</span><h1 id="pageTitle">产品总看板</h1><div id="integrationStatus" class="integration-status">CORE/ISOLATION=PASS · BOL_API_PRODUCTION=WAITING_DEPENDENCY · BOLOO_MCP=WAITING_DEPENDENCY · BOLOO_OFFICIAL_WEB=WAITING_DEPENDENCY · MABANG_SCHEMA=WAITING_DECISION</div></div><div class="top-actions"><button class="global-entry error-entry" data-view="exceptions">异常 <b id="globalErrorCount">0</b></button><button class="global-entry confirm-entry" data-view="confirmations">待人工确认 <b id="globalConfirmationCount">0</b></button><span class="local-pill"><i></i><b id="environmentBadge">环境识别中</b></span><span class="updated" id="updatedAt">读取状态中</span><button class="icon-button" id="refreshBtn" title="刷新">↻</button></div></header>
+
+      <section class="page active" id="boardView">
+        <div class="summary-grid">
+          <article class="summary-card"><span>SKU 总数</span><strong id="totalCount">0</strong><small>一个 SKU 对应一个独立任务</small></article>
+          <article class="summary-card"><span>处理中</span><strong id="activeCount">0</strong><small>按单品阶段显示</small></article>
+          <article class="summary-card warn"><span>异常待处理</span><strong id="errorCount">0</strong><small>修复后必须重新核验</small></article>
+          <article class="summary-card good"><span>待上传</span><strong id="uploadCount">0</strong><small>Final QA 与 Excel QA 全部通过</small></article>
+        </div>
+        <div class="category-grid">
+          <button class="category-card listing-category" data-view="listing-overview"><span class="category-icon">L</span><span><b>Listing 制作</b><small>产品资料、关键词、Listing、QA、Excel 与上传归档</small></span><strong id="listingTaskCount">0</strong></button>
+          <button class="category-card research-category" data-view="research"><span class="category-icon">R</span><span><b>竞品调研</b><small>独立任务；只有 Leon 主动加入后才启动</small></span><strong id="researchTaskCount">0</strong></button>
+        </div>
+        <div class="board-toolbar"><div class="pool-tabs" id="poolTabs"></div><div class="toolbar-actions"><button class="button secondary" id="exportBtn">导出任务 CSV</button><button class="button primary" data-open-import>＋ 导入产品</button></div></div>
+        <div class="table-card">
+          <div class="table-heading"><div><b>SKU 任务</b><span id="rowCount">0 个产品</span></div><div class="legend"><span><i class="state-dot pass"></i>通过</span><span><i class="state-dot work"></i>进行中</span><span><i class="state-dot off"></i>未接入</span></div></div>
+          <div class="table-scroll"><table><thead><tr><th>SKU / 产品</th><th>一级中心 / 精确步骤</th><th>活动池</th><th>马帮</th><th>美工</th><th>关键词</th><th>Listing</th><th>核验</th><th>上传</th><th>最后更新时间</th><th></th></tr></thead><tbody id="taskRows"><tr><td colspan="11" class="empty">正在读取任务…</td></tr></tbody></table></div>
+          <div class="table-foot"><span>阶段必须 QA=PASS 才会自动进入下一池</span><span id="pageDataCount">—</span></div>
+        </div>
+      </section>
+
+      <section class="page listing-page" id="listing-overviewView">
+        <div class="listing-pipeline-strip" id="listingPipelineStrip"></div>
+        <div class="summary-grid listing-summary"><article class="summary-card"><span>Listing SKU</span><strong id="listingOverviewCount">0</strong><small>每个 SKU 独立任务</small></article><article class="summary-card"><span>进行中</span><strong id="listingOverviewActive">0</strong><small>按当前步骤统计</small></article><article class="summary-card warn"><span>异常</span><strong id="listingOverviewErrors">0</strong><small>进入全局异常中心</small></article><article class="summary-card good"><span>待上传</span><strong id="listingOverviewUpload">0</strong><small>QA 完成后等待人工上传</small></article></div>
+        <div class="table-card listing-overview-table"><div class="table-heading"><div><b>Listing SKU 状态</b><span id="listingRowCount">0 个 SKU</span></div><button class="button primary" data-open-import>＋ 导入产品</button></div><div class="table-scroll"><table><thead><tr><th>SKU / 产品</th><th>当前精确步骤</th><th>当前状态</th><th>马帮</th><th>美工</th><th>关键词</th><th>Listing</th><th>QA</th><th>上传</th><th>最后更新时间</th><th></th></tr></thead><tbody id="listingRows"></tbody></table></div></div>
+      </section>
+      <section class="page listing-page" id="listing-prepView"><div class="listing-pipeline-strip" data-pipeline-copy></div><div class="section-intro"><div><span class="eyebrow">PRODUCT FACTS & PREPARATION</span><h2>资料与准备</h2><p>Product Master、来源资料与马帮并行任务。重量保留 kg 原值；模板 Schema 未确认前不填表。</p></div></div><div class="mabang-banner"><b>马帮并行任务</b><span>Product Master QA PASS 后创建侧车任务，不阻塞 Listing；原模板结构保持不变。</span></div><div class="pipeline-card"><div class="table-heading"><div><b>资料阶段</b><span>选择 SKU 查看事实与来源</span></div></div><div id="listingPrepSteps" class="stage-list"></div></div><div class="table-card center-table"><div class="table-heading"><b>资料与准备中的 SKU</b></div><div class="table-scroll"><table><thead><tr><th>SKU</th><th>Product Master</th><th>马帮并行状态</th><th>重量 kg → g</th><th>当前状态</th><th>更新时间</th></tr></thead><tbody id="listingPrepRows"></tbody></table></div></div></section>
+      <section class="page listing-page" id="listing-keywordsView"><div class="listing-pipeline-strip" data-pipeline-copy></div><div class="section-intro"><div><span class="eyebrow">KEYWORD DISCOVERY</span><h2>关键词</h2><p>BOL 联想词、Boloo 官方搜索量与 TOP20；按原词串及当前阶段显示。</p></div></div><div id="listingKeywordSteps" class="stage-list"></div><div class="table-card center-table"><div class="table-heading"><b>关键词阶段 SKU</b></div><div class="table-scroll"><table><thead><tr><th>SKU</th><th>精确步骤</th><th>BOL API</th><th>Boloo</th><th>发现进度</th><th>Stage QA</th><th>更新时间</th></tr></thead><tbody id="listingKeywordRows"></tbody></table></div></div></section>
+      <section class="page listing-page" id="listing-generationView"><div class="listing-pipeline-strip" data-pipeline-copy></div><div class="section-intro"><div><span class="eyebrow">LISTING PRODUCTION</span><h2>Listing 生成</h2><p>保持 SOP 的步骤顺序和 QA 门禁；页面拆分不改变执行规则。</p></div></div><div id="listingGenerationSteps" class="stage-list"></div><div class="table-card center-table"><div class="table-heading"><b>Listing 生成阶段 SKU</b></div><div class="table-scroll"><table><thead><tr><th>SKU</th><th>精确步骤</th><th>当前状态</th><th>Listing</th><th>Stage QA</th><th>更新时间</th><th></th></tr></thead><tbody id="listingGenerationRows"></tbody></table></div></div></section>
+      <section class="page listing-page" id="listing-qaView"><div class="listing-pipeline-strip" data-pipeline-copy></div><div class="section-intro"><div><span class="eyebrow">QA & UPLOAD</span><h2>QA 与上传</h2><p>只展示 QA、Excel 核验及待上传产品；标记已上传按钮仍调用原有操作。</p></div></div><div id="listingQaSteps" class="stage-list"></div><div class="table-card center-table"><div class="table-heading"><b>QA 与上传 SKU</b></div><div class="table-scroll"><table><thead><tr><th>SKU</th><th>精确步骤</th><th>Stage QA</th><th>Final QA</th><th>Excel QA</th><th>上传状态</th><th>更新时间</th><th></th></tr></thead><tbody id="listingQaRows"></tbody></table></div></div></section>
+      <section class="page listing-page" id="listing-archiveView"><div class="listing-pipeline-strip" data-pipeline-copy></div><div class="section-intro"><div><span class="eyebrow">LOCKED FINAL ARCHIVE</span><h2>已上传存档</h2><p>显示已经标记上传且 Final 已锁定的 Listing 版本。</p></div></div><div class="table-card center-table"><div class="table-heading"><b>Listing Final 存档</b></div><div class="table-scroll"><table><thead><tr><th>SKU</th><th>Final 标题</th><th>已保存版本</th><th>上传日期</th><th>Final 状态</th><th></th></tr></thead><tbody id="listingArchiveRows"></tbody></table></div></div></section>
+
+      <section class="page" id="researchView">
+        <div class="section-intro"><div><span class="eyebrow">INDEPENDENT COMPETITOR RESEARCH</span><h2>竞品调研</h2><p>与 Listing 完全独立；只共享产品事实与客观数据，不复用 Listing 的竞品判断。</p></div></div>
+        <div class="research-warning"><b>独立任务需 Leon 主动加入</b><span>加入任务只保存产品基准快照和你提供的一个 HTTPS 种子竞品；当前调研执行器未就绪时留在当前池，不制造 SKU 异常，也不影响 Listing。</span></div>
+        <article class="queue-form"><div><b>加入竞品调研任务表</b><small>只对明确选择的 SKU 建立独立研究任务</small></div><label>SKU<select id="researchSku"><option value="">选择已有 Product Master SKU</option></select></label><label>种子竞品 URL<input id="researchSeed" type="url" placeholder="https://…" autocomplete="off"></label><button class="button primary" id="queueResearch">加入独立任务</button></article>
+        <div class="section-intro compact-intro"><div><h2>竞品调研活动池</h2><p>逐步按竞品调研 SOP 执行；每一阶段独立 QA，当前没有真实执行产物时不会流转。</p></div></div><div id="researchPoolCards" class="pool-grid research-pools"></div>
+        <div class="table-card center-table"><div class="table-heading"><div><b>独立竞品调研任务</b><span id="researchRowCount">0 个任务</span></div></div><div class="table-scroll"><table><thead><tr><th>SKU / 任务</th><th>基准快照版本</th><th>竞品调研任务版本</th><th>种子竞品</th><th>精确步骤</th><th>调研活动池</th><th>Stage QA</th><th>状态 / 依赖</th><th>更新时间</th><th></th></tr></thead><tbody id="researchRows"></tbody></table></div></div>
+      </section>
+
+      <section class="page" id="poolsView"><div class="section-intro"><div><span class="eyebrow">GLOBAL ACTIVITY</span><h2>全局活动池</h2><p>跨 Listing、竞品调研及并行模块查看 RUNNING、QUEUED、等待依赖和暂停任务。</p></div></div><div class="activity-filter" id="activityFilters"><button class="selected" data-activity-filter="ALL">全部</button><button data-activity-filter="RUNNING">RUNNING</button><button data-activity-filter="QUEUED">QUEUED</button><button data-activity-filter="WAITING">等待中</button><button data-activity-filter="PAUSED">PAUSED</button></div><div class="table-card"><div class="table-scroll"><table><thead><tr><th>SKU / 任务</th><th>业务模块</th><th>当前步骤</th><th>状态</th><th>Worker / Provider</th><th>优先级</th><th>队列位置</th><th>更新时间</th></tr></thead><tbody id="globalActivityRows"></tbody></table></div></div></section>
+
+      <section class="page" id="exceptionsView"><div class="section-intro"><div><span class="eyebrow">ISSUE RECOVERY</span><h2>异常闭环</h2><p>修复后只能进入“已修复待核验”，重新核验 PASS 后才能离开异常池。</p></div></div><div class="exception-layout"><div class="exception-list" id="exceptionList"></div><article class="issue-detail" id="issueDetail"><div class="empty-detail">选择一个异常查看错误位置、原因、当前值、标准和恢复点。</div></article></div></section>
+      <section class="page" id="confirmationsView"><div class="section-intro"><div><span class="eyebrow">HUMAN CONFIRMATION</span><h2>待人工确认</h2><p>与 ERROR 异常池独立；展示等待 Leon 决策的产品事项。</p></div></div><div class="confirmation-list" id="confirmationList"></div></section>
+      <section class="page" id="productDetailView"><div class="detail-heading"><button class="button secondary" id="detailBack">← 返回</button><div><span class="eyebrow">PRODUCT DETAIL</span><h2 id="detailTitle">SKU 详情</h2><small id="detailStatus"></small></div></div><nav class="detail-tabs" id="detailTabs"><button class="selected" data-detail-tab="acceptance">验收总览</button><button data-detail-tab="basic">基础资料</button><button data-detail-tab="mabang">马帮</button><button data-detail-tab="images">图片</button><button data-detail-tab="keywords">关键词详情</button><button data-detail-tab="listing">Listing</button><button data-detail-tab="qa">QA</button><button data-detail-tab="history">历史</button><button data-detail-tab="files">文件</button></nav><div class="detail-panel" id="detailPanel"></div></section>
+
+      <section class="page" id="importView"><div class="section-intro"><div><span class="eyebrow">PRODUCT MASTER</span><h2>导入产品</h2><p>支持按实际表头读取 Excel；逐行先做 Schema/字段对齐 QA，通过的 SKU 才能进入 Product Master。</p></div></div><div class="import-grid"><article class="import-card"><h3>选择 CSV / JSON 文件</h3><p>CSV 字段：sku,name,ean,brand,weight_kg,source_refs,confirmed_core_terms。confirmed_core_terms 最多 3 个核心查询词，用分号分隔。</p><label class="file-drop" for="importFile"><span>⇧</span><b>选择本机文件</b><small>CSV、JSON · 文件留在此 BOL 副本</small><input id="importFile" type="file" accept=".csv,.json,text/csv,application/json"></label><div id="fileName" class="file-name">尚未选择文件</div></article><article class="import-card"><h3>或粘贴数据</h3><p>JSON 数组或带表头的 CSV。</p><textarea id="importText" spellcheck="false" placeholder="sku,name,ean,brand,weight_kg,source_refs,confirmed_core_terms&#10;BOL-001,Product name,1234567890123,Brand,0.85,own-product.xlsx,term one;term two"></textarea><div class="import-actions"><span id="importFeedback">支持最多 500 条 / 次</span><button class="button primary" id="importSubmit">导入并创建独立任务</button></div></article></div><article class="import-card workbook-import"><h3>Leon 的《BOL平台关键词审核.xlsx》</h3><p>读取实际 Sheet 与表头；原文件不修改。表头位置变化会重新按字段名映射。请先限定本轮需要处理的产品ID，再检查并选择通过 QA 的 SKU。</p><label class="file-drop" for="sourceWorkbookFile"><span>⇧</span><b>选择 Excel 工作簿</b><small>XLSX · 原文件保持不变，副本和报告保存到 BOL 数据区</small><input id="sourceWorkbookFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label><div class="file-name" id="sourceWorkbookName">尚未选择工作簿</div><label>本轮产品ID范围（逗号分隔，可留空）<input id="sourceWorkbookScope" type="text" placeholder="例如：P011,P012,P013,P014,P015"></label><div class="import-actions"><span id="sourceWorkbookFeedback">Schema/行对齐未通过的 SKU 不会写入 Product Master。</span><button class="button secondary" id="validateSourceWorkbook">只读检查</button><button class="button primary" id="importValidatedWorkbook" disabled>导入所选通过行</button></div><div id="sourceWorkbookPreview" class="workbook-preview"></div></article><article class="import-result hidden" id="importResult"></article></section>
+    </main>
+  </div>
+  <dialog id="historyDialog"><div class="dialog-head"><div><span class="eyebrow">IMMUTABLE TASK LOG</span><h2 id="historyTitle">SKU 历史</h2></div><button class="icon-button" id="closeHistory">×</button></div><div id="historyItems" class="history-items"></div></dialog>
+  <dialog id="finalDialog"><div class="dialog-head"><div><span class="eyebrow">LOCKED FINAL VERSION</span><h2 id="finalTitle">已上传存档</h2></div><button class="icon-button" id="closeFinal">×</button></div><div id="finalItems" class="final-items"></div></dialog>
+  <dialog id="editDialog"><form method="dialog"><div class="dialog-head"><div><span class="eyebrow">PRODUCT MASTER REVISION</span><h2 id="editTitle">修改产品资料</h2></div><button class="icon-button" value="cancel">×</button></div><p>修复不会自动清除异常或通过 QA。提交后状态进入“已修复待核验”。</p><label>允许修改的 Product Master 字段 / JSON patch<textarea id="editPatch" spellcheck="false"></textarea></label><div class="dialog-actions"><button class="button secondary" value="cancel">取消</button><button class="button primary" id="savePatch" value="default">保存修改</button></div></form></dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/bol.js" defer></script>
+</body>
+</html>

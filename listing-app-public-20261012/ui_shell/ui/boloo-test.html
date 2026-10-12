@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Boloo 工作台测试页 · BOL_AUTO 隔离测试</title>
+  <style>
+    :root { color-scheme: light; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: #17212f; background: #f3f6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; height: 100vh; overflow: hidden; }
+    .shell { display: grid; grid-template-columns: 330px minmax(0, 1fr); height: 100vh; }
+    aside { padding: 24px 20px; background: #10233f; color: #eaf1fb; overflow: auto; }
+    .eyebrow { color: #91a9c9; font-size: 11px; letter-spacing: .12em; font-weight: 700; }
+    h1 { margin: 10px 0 8px; font-size: 21px; line-height: 1.3; }
+    .lead { color: #bfd0e6; font-size: 13px; line-height: 1.55; margin: 0 0 20px; }
+    .card { padding: 13px 14px; margin: 12px 0; border: 1px solid #344b6c; border-radius: 12px; background: #172d4d; }
+    .card b { display: block; font-size: 13px; margin-bottom: 7px; }
+    .card p, .card li { margin: 0; color: #c3d2e6; font-size: 12px; line-height: 1.55; }
+    .card ul { margin: 8px 0 0; padding-left: 18px; }
+    #frameStatus { margin-top: 8px; color: #ffdb8b; font-weight: 600; }
+    .url { display: block; margin-top: 6px; color: #9ecbff; font: 11px Consolas, monospace; overflow-wrap: anywhere; }
+    main { min-width: 0; display: grid; grid-template-rows: 54px minmax(0,1fr); background: white; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 18px; border-bottom: 1px solid #dce4ee; color: #4f6075; font-size: 12px; }
+    .toolbar strong { color: #15263c; }
+    iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    @media (max-width: 800px) { .shell { grid-template-columns: 250px minmax(0,1fr); } aside { padding: 18px 14px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <span class="eyebrow">BOL_AUTO / ISOLATED TEST</span>
+      <h1>Boloo 工作台测试页</h1>
+      <p class="lead">仅验证页面嵌入和手工登录。此页面不调用 SKU、Listing、关键词池或任何正式任务 API。</p>
+      <section class="card"><b>iframe 状态</b><p id="frameStatus" role="status">正在请求 Boloo 页面…</p><span class="url">https://app.boloo.co/</span></section>
+      <section class="card"><b>测试边界</b><ul>
+        <li>当前内容是 BOL_AUTO 本地页面中的普通 iframe。</li>
+        <li>不会从父页面读取或操作 Boloo iframe DOM。</li>
+        <li>请由 Leon 在右侧手工登录一次。</li>
+        <li>登录后先检查页面显示；若被挡，记录浏览器 Console / Network 中的 X-Frame-Options 或 CSP frame-ancestors。</li>
+      </ul></section>
+      <section class="card"><b>独立浏览器配置</b><p>此测试通过单独的 Edge 用户数据目录启动，登录状态与 Codex IAB、默认 Edge 和 其他项目配置隔离。</p><span class="url">BOL数据\webview\boloo</span></section>
+      <section class="card"><b>后续顺序</b><p>iframe 可显示时，仅验证显示；若无法承载，先停止此 iframe 测试，再决定是否建立 BOL 专用 WebView2 测试窗格。不会进入正式 Listing 流程。</p></section>
+    </aside>
+    <main>
+      <header class="toolbar"><strong>Boloo · 登录后请手工打开 Keyword Explorer / Keyword Extractor</strong><span>测试页面 · 不写入正式关键词池</span></header>
+      <iframe id="bolooFrame" title="Boloo isolated iframe test" src="https://app.boloo.co/" referrerpolicy="no-referrer"></iframe>
+    </main>
+  </div>
+  <script>
+    const status = document.getElementById('frameStatus');
+    document.getElementById('bolooFrame').addEventListener('load', () => {
+      status.textContent = `iframe load 事件已触发 · ${new Date().toLocaleTimeString()}`;
+      status.style.color = '#9fe3b2';
+    });
+    document.getElementById('bolooFrame').addEventListener('error', () => {
+      status.textContent = 'iframe error 事件触发；请检查浏览器 Console / Network 具体阻止原因。';
+      status.style.color = '#ff9e9e';
+    });
+  </script>
+</body>
+</html>
